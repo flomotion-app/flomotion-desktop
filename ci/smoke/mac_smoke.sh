@@ -15,6 +15,11 @@ log "agent (launches the window and waits for the page)"
 "$EXE" agent 2>&1 | tee "$OUT/agent.json" | head -c 400; echo
 log "create project and workspace"
 act create_project '{"name":"Mac smoke"}'
+if ! grep -q '"role": "manager"' "$OUT/log.txt"; then
+  log "first action failed on a fresh account, retrying once"
+  sleep 3
+  act create_project '{"name":"Mac smoke"}'
+fi
 act create_workspace '{"title":"Box"}'
 act upsert_component -f "$HERE/box.json"
 sleep 8
