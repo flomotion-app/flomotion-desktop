@@ -1,6 +1,10 @@
-// Prevents additional console window on Windows in release, DO NOT REMOVE!!
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+use clap::Parser;
+use flomotion_desktop_lib::cli::Cli;
 
 fn main() {
-    flomotion_desktop_lib::run()
+    let cli = Cli::parse();
+    match cli.command {
+        None => flomotion_desktop_lib::run_app(),
+        Some(command) => std::process::exit(flomotion_desktop_lib::run_cli(command)),
+    }
 }

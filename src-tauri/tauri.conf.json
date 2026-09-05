@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Flomotion",
+  "productName": "FloMotion",
   "version": "0.1.0",
   "identifier": "app.flomotion.desktop",
   "build": {
@@ -11,13 +11,6 @@
   },
   "app": {
     "withGlobalTauri": true,
-    "windows": [
-      {
-        "title": "Flomotion",
-        "width": 1400,
-        "height": 900
-      }
-    ],
     "security": {
       "csp": null
     }

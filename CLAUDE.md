@@ -4,6 +4,7 @@ Rules:
 - Rust for the shell and CLI, TypeScript for the small local page. No frameworks in the local page.
 - One binary: no subcommand opens the window, subcommands act as the CLI and talk to the running window over a local socket.
 - The window loads the hosted Flomotion web client; this repo never contains the web client source.
+- The shell is a dumb pipe. Any behaviour that might change (polling, result shaping, navigation) lives in the web page, because desktop releases are expensive and the page deploys freely.
 - The CLI never holds credentials. Auth lives in the webview session.
 - Client tools run in the page, results are returned to the CLI, nothing is recorded server-side.
 - Dependency injection, no globals, no static helpers. Modules short and focused.
