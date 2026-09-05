@@ -1,12 +1,36 @@
 use crate::config::AppConfig;
 use std::error::Error;
-use tauri::{AppHandle, Url, WebviewUrl, WebviewWindowBuilder};
+use tauri::{AppHandle, Manager, Url, WebviewUrl, WebviewWindowBuilder};
 
 const WINDOW_LABEL: &str = "main";
 #[cfg(windows)]
 const WEBVIEW_ARGS_ENV: &str = "FLOMOTION_WEBVIEW_ARGS";
 #[cfg(windows)]
 const DEFAULT_BROWSER_ARGS: &str = "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection";
+
+pub trait WindowControl: Send + Sync {
+    fn focus(&self);
+}
+
+pub struct TauriWindowControl {
+    app: AppHandle,
+}
+
+impl TauriWindowControl {
+    pub fn new(app: AppHandle) -> Self {
+        Self { app }
+    }
+}
+
+impl WindowControl for TauriWindowControl {
+    fn focus(&self) {
+        if let Some(window) = self.app.get_webview_window(WINDOW_LABEL) {
+            let _ = window.unminimize();
+            let _ = window.show();
+            let _ = window.set_focus();
+        }
+    }
+}
 
 pub struct WindowFactory {
     config: AppConfig,

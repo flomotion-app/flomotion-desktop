@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 pub const COMMAND_STATUS: &str = "status";
+pub const COMMAND_FOCUS: &str = "focus";
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Request {
@@ -26,6 +27,10 @@ impl Request {
 
     pub fn status() -> Self {
         Self::new(COMMAND_STATUS, Value::Null)
+    }
+
+    pub fn focus() -> Self {
+        Self::new(COMMAND_FOCUS, Value::Null)
     }
 }
 

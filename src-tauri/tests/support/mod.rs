@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
 use flomotion_desktop_lib::app::bridge::PageChannel;
+use flomotion_desktop_lib::app::window::WindowControl;
 use flomotion_desktop_lib::cli::files::FileStore;
 use flomotion_desktop_lib::cli::launcher::AppLauncher;
 use flomotion_desktop_lib::config::AppConfig;
@@ -18,6 +19,22 @@ pub fn config() -> AppConfig {
         version: "0.0.1".into(),
         page_timeout: Duration::from_secs(1),
         app_start_timeout: Duration::from_secs(2),
+    }
+}
+
+pub struct FakeWindow {
+    pub focused: AtomicUsize,
+}
+
+impl FakeWindow {
+    pub fn new() -> Arc<Self> {
+        Arc::new(Self { focused: AtomicUsize::new(0) })
+    }
+}
+
+impl WindowControl for FakeWindow {
+    fn focus(&self) {
+        self.focused.fetch_add(1, Ordering::SeqCst);
     }
 }
 
