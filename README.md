@@ -4,7 +4,7 @@ Desktop shell and CLI for [FloMotion](https://flomotion.app), the AI-driven robo
 
 It lets you drive FloMotion with your own AI agent (Claude Code, Codex, Gemini CLI, Cursor, or anything that can run a command) on your own agent subscription. The app hosts the FloMotion web client so the agent can run client-side tools such as screenshots and simulations, and so you can watch the agent work.
 
-Status: working end to end on Windows and Linux against the hosted client. macOS builds and passes its tests in CI but has not been run on a real machine yet, reports welcome. The hosted client is closed source and implements the page side of the protocol; the shell forwards `agent`, `act`, `job`, `import` and `export` commands to it over a Tauri event and reads back the answers.
+Status: working end to end on Windows and Linux against the hosted client. macOS passes its tests and a smoke run in CI, where the window opens, the page connects and the WebGL screenshot tool renders; it has not been used on a physical mac yet, reports welcome. The hosted client is closed source and implements the page side of the protocol; the shell forwards `agent`, `act`, `job`, `import` and `export` commands to it over a Tauri event and reads back the answers.
 
 ## Installing
 
