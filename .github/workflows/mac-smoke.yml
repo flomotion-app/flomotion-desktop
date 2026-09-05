@@ -1,0 +1,33 @@
+name: mac-smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      web_url:
+        description: Site the window loads
+        default: https://feature.flomotion.app
+        required: true
+
+jobs:
+  smoke:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run tauri build -- --no-bundle
+      - name: Drive the app and capture the screen
+        env:
+          FLOMOTION_URL: ${{ inputs.web_url }}
+        run: bash ci/smoke/mac_smoke.sh src-tauri/target/release/flomotion-desktop
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mac-smoke
+          path: smoke-out

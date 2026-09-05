@@ -1,0 +1,7 @@
+{
+  "id": "box",
+  "script": "body = Workplane(\"XY\").box(40, 30, 20)\nresult = assembly(part(\"box\", body))",
+  "shapes": [{"type": "box", "size": [40, 30, 20], "position": [0, 0, 0]}],
+  "position": [0, 0, 10],
+  "material": {"color": "#247ac9"}
+}
