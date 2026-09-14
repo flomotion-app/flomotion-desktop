@@ -1,6 +1,6 @@
 [package]
 name = "flomotion-desktop"
-version = "0.1.1"
+version = "0.2.0"
 description = "FloMotion desktop shell and CLI"
 authors = ["FloMotion"]
 license = "MIT"
@@ -14,7 +14,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = [] }
+tauri = { version = "2", features = ["protocol-asset"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 interprocess = "2"

@@ -23,7 +23,7 @@ Then run `flomotion status`. Open a new terminal first if the path was just chan
 - `flomotion agent` prints the current state as JSON: `role`, `system_prompt`, `tools`, `live_context`, and the open project and item. Read `system_prompt` and follow it. Pass `--reset` to start over from no project.
 - `flomotion act <tool> '<json input>'` runs one tool and prints its result as JSON. Use `-f file.json` for large inputs. The output includes `changed`; when it is true, the response also carries a new `tools` list and possibly a new `system_prompt`, so re-read them.
 - Some tools start a background job, for example validation or G-code generation. `act` waits up to 90 seconds for it (change with `--wait`). If the output says the job is still pending, run `flomotion job <id>` to keep waiting.
-- `flomotion import <file.step>` imports a STEP model into the open workspace as new components. Open the workspace first.
+- `flomotion import <file>` brings a local file into the project. A `.step` or `.stp` model is added to the open workspace as new components, so open the workspace first. A `.zip` holding a MuJoCo MJCF model becomes a new workspace in the open project. Large files are handed over by path rather than copied, so a big archive is no slower than a small one.
 - `flomotion export <kind> [--id <component>] [--out <dir>]` writes an export of the focused item to disk and prints the paths. Kinds: `step` and `stl` for one component, `assembly_step` for the whole workspace, `gcode` for a CAM result, `kicad` for a schematic's symbols.
 - `flomotion skill` prints this text.
 

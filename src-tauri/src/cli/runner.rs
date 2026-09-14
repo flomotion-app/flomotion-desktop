@@ -1,4 +1,5 @@
 use crate::cli::files::FileMaterializer;
+use crate::cli::imports::{ImportPayload, ImportTransport};
 use crate::cli::launcher::AppLauncher;
 use crate::cli::Command;
 use crate::error::{DesktopError, Result};
@@ -33,7 +34,10 @@ impl CliRunner {
                 self.call("act", json!({ "name": name, "input": input, "wait": wait }))?
             }
             Command::Job { id, wait } => self.call("job", json!({ "job_id": id, "wait": wait }))?,
-            Command::Import { path } => self.call("import", FileMaterializer::encode(&path)?)?,
+            Command::Import { path, transport } => {
+                let payload = ImportPayload::build(&path, ImportTransport::parse(transport.as_deref())?)?;
+                self.call("import", payload)?
+            }
             Command::Export { kind, id, out } => {
                 self.ensure_page_ready()?;
                 let response = self.transport.send(Request::new("export", json!({ "kind": kind, "id": id })))?;

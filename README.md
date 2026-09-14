@@ -25,7 +25,7 @@ Manual install is the same thing by hand. Each archive contains one folder `flom
 | Linux x86_64 | `flomotion-linux-x86_64.tar.gz` | `tar -xzf`, copy `flomotion/flomotion` somewhere on PATH, `sudo apt-get install libwebkit2gtk-4.1-0` |
 | macOS arm64 | `flomotion-macos-arm64.tar.gz` | `tar -xzf`, copy `flomotion/flomotion` somewhere on PATH |
 | macOS x86_64 | `flomotion-macos-x86_64.tar.gz` | same |
-| Windows x86_64 | `flomotion-windows-x86_64.zip` | extract, put `flomotionlomotion.exe` on PATH |
+| Windows x86_64 | `flomotion-windows-x86_64.zip` | extract, put `flomotion\flomotion.exe` on PATH |
 
 The archives are not code signed. The macOS binaries are ad-hoc signed, which is enough to run a file fetched with curl or tar rather than a browser download. Windows needs the WebView2 runtime, present on Windows 11 and most Windows 10 machines. Anyone who prefers not to run an unsigned binary can build from source, see below.
 
@@ -48,7 +48,8 @@ flomotion act <tool> '{"json": "input"}'
 flomotion act <tool> -f input.json
 flomotion act <tool> --wait 300     wait longer for a batch job
 flomotion job <id> [--wait N]       keep waiting for a batch job
-flomotion import <file.step>        import a STEP model into the open workspace
+flomotion import <file>             STEP model into the open workspace, or MJCF zip as a new workspace
+flomotion import <file> --transport path|inline   force how the file reaches the app
 flomotion export <kind> [--id X] [--out DIR]   write STEP, STL, G-code or KiCad symbols to disk
 flomotion skill           print the agent instructions
 ```

@@ -1,4 +1,5 @@
 pub mod files;
+pub mod imports;
 pub mod launcher;
 pub mod runner;
 
@@ -43,10 +44,13 @@ pub enum Command {
         #[arg(long, default_value_t = 90)]
         wait: u64,
     },
-    /// Import a STEP model into the open workspace
+    /// Import a file into the open project: a STEP model into the focused workspace, or a MuJoCo MJCF zip as a new workspace
     Import {
-        /// Path of the .step or .stp file
+        /// Path of the file
         path: PathBuf,
+        /// How to hand the file to the app: auto (default), path or inline
+        #[arg(long)]
+        transport: Option<String>,
     },
     /// Write an export of the focused item to disk
     Export {

@@ -131,11 +131,12 @@ fn import_sends_the_file_as_base64() {
     std::fs::write(&path, b"ISO-10303").unwrap();
     let (runner, log, _) = runner(vec![ready(), Ok(Response::success(json!({"file_id": "f1"})))]);
     let mut out = Vec::new();
-    runner.run(Command::Import { path }, &mut out).unwrap();
+    runner.run(Command::Import { path, transport: None }, &mut out).unwrap();
     let sent = log.sent.lock().unwrap();
     assert_eq!(sent[1].command, "import");
     assert_eq!(sent[1].payload["name"], "part.step");
     assert_eq!(sent[1].payload["data_base64"], "SVNPLTEwMzAz");
+    assert_eq!(sent[1].payload["size"], 9);
     assert_eq!(output(out)["file_id"], "f1");
 }
 
