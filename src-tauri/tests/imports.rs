@@ -60,6 +60,7 @@ fn missing_files_and_directories_are_rejected() {
     let missing = ImportPayload::build(&PathBuf::from("no-such-file.step"), ImportTransport::Auto).unwrap_err();
     assert!(missing.to_string().contains("cannot read"), "{missing}");
     let dir = std::env::temp_dir().join("flomotion-import-tests");
+    fs::create_dir_all(&dir).unwrap();
     let error = ImportPayload::build(&dir, ImportTransport::Auto).unwrap_err();
     assert!(error.to_string().contains("not a file"), "{error}");
 }
