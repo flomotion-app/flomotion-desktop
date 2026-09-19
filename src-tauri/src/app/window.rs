@@ -1,4 +1,5 @@
 use crate::config::AppConfig;
+use crate::window_name::WindowName;
 use std::error::Error;
 use tauri::{AppHandle, Manager, Url, WebviewUrl, WebviewWindowBuilder};
 
@@ -34,20 +35,41 @@ impl WindowControl for TauriWindowControl {
 
 pub struct WindowFactory {
     config: AppConfig,
+    window_name: WindowName,
 }
 
 impl WindowFactory {
-    pub fn new(config: AppConfig) -> Self {
-        Self { config }
+    pub fn new(config: AppConfig, window_name: WindowName) -> Self {
+        Self { config, window_name }
     }
 
     pub fn open(&self, app: &AppHandle) -> Result<(), Box<dyn Error>> {
-        let builder = WebviewWindowBuilder::new(app, WINDOW_LABEL, self.url()?)
-            .title("FloMotion")
+        let mut builder = WebviewWindowBuilder::new(app, WINDOW_LABEL, self.url()?)
+            .title(&self.title())
             .inner_size(1400.0, 900.0)
             .initialization_script(&self.marker_script());
+        // Two windows cannot share one webview profile, so a named window gets its own.
+        if let Some(directory) = self.data_directory(app) {
+            builder = builder.data_directory(directory);
+        }
         Self::with_browser_args(builder).build()?;
         Ok(())
+    }
+
+    fn title(&self) -> String {
+        if self.window_name.is_default() {
+            return "FloMotion".to_string();
+        }
+        format!("FloMotion ({})", self.window_name.as_str())
+    }
+
+    // The default window keeps the original profile so existing sessions survive.
+    fn data_directory(&self, app: &AppHandle) -> Option<std::path::PathBuf> {
+        if self.window_name.is_default() {
+            return None;
+        }
+        let base = app.path().app_local_data_dir().ok()?;
+        Some(base.join("windows").join(self.window_name.as_str()))
     }
 
     #[cfg(windows)]

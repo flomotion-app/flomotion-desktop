@@ -42,7 +42,8 @@ Point the agent at [AGENT.md](AGENT.md): it covers installing the binary and eve
 
 ```
 flomotion                 open the window
-flomotion status          is the app running, is the page connected
+flomotion --window <name> open or address a separate window
+flomotion status          is the app running, is the page connected, which window
 flomotion agent [--reset] print role, system prompt, tools, live context
 flomotion act <tool> '{"json": "input"}'
 flomotion act <tool> -f input.json
@@ -70,6 +71,20 @@ The window loads flomotion.app by default and opens on `/projects`. To point it 
 ```
 
 The `FLOMOTION_URL` environment variable overrides the file. Use `local` to load the test page in `src/`.
+
+## Several windows at once
+
+Each window has a name, `flomotion` by default. Passing `--window <name>`, or setting
+`FLOMOTION_WINDOW`, opens or addresses a separate window with its own socket, so two agents on
+one machine can drive their own windows without colliding. The flag wins over the environment
+variable. Names may contain letters, digits, underscore and dash, up to 32 characters.
+
+```
+FLOMOTION_WINDOW=edge FLOMOTION_URL=https://feature.flomotion.app flomotion agent
+```
+
+A named window gets its own browser profile, so it signs in separately from the default one.
+`flomotion status` reports which window it is addressing.
 
 Debugging the page on Windows: set `FLOMOTION_WEBVIEW_ARGS=--remote-debugging-port=9222` before launching, then attach any Chrome DevTools Protocol client to port 9222.
 

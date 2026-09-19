@@ -14,9 +14,10 @@ use std::sync::Arc;
 use tauri::Manager;
 use files::{PageFiles, TauriAssetScope};
 use window::{TauriWindowControl, WindowFactory};
+use crate::window_name::WindowName;
 
-pub fn run(config: AppConfig) {
-    if focus_running_instance() {
+pub fn run(config: AppConfig, window_name: WindowName) {
+    if focus_running_instance(&window_name) {
         return;
     }
     tauri::Builder::default()
@@ -26,9 +27,9 @@ pub fn run(config: AppConfig) {
             let files = Arc::new(PageFiles::new(Box::new(TauriAssetScope::new(app.handle().clone()))));
             app.manage(Arc::clone(&files));
             let window = Arc::new(TauriWindowControl::new(app.handle().clone()));
-            let dispatcher = Arc::new(Dispatcher::new(config.clone(), bridge, window, files));
-            IpcServer::new(dispatcher).start()?;
-            WindowFactory::new(config.clone()).open(app.handle())?;
+            let dispatcher = Arc::new(Dispatcher::new(config.clone(), bridge, window, files, window_name.clone()));
+            IpcServer::new(dispatcher, window_name.clone()).start()?;
+            WindowFactory::new(config.clone(), window_name.clone()).open(app.handle())?;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![commands::cli_ready, commands::cli_respond, commands::cli_file_url])
@@ -36,8 +37,8 @@ pub fn run(config: AppConfig) {
         .expect("failed to run FloMotion");
 }
 
-fn focus_running_instance() -> bool {
-    let transport = SocketTransport;
+fn focus_running_instance(window: &WindowName) -> bool {
+    let transport = SocketTransport::new(window.clone());
     if transport.send(Request::status()).is_err() {
         return false;
     }

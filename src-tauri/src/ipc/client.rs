@@ -1,14 +1,23 @@
 use crate::error::{DesktopError, Result};
 use crate::ipc::name::SocketName;
+use crate::window_name::WindowName;
 use crate::ipc::protocol::{Request, Response, Transport};
 use interprocess::local_socket::{prelude::*, Stream};
 use std::io::{BufRead, BufReader, Write};
 
-pub struct SocketTransport;
+pub struct SocketTransport {
+    window: WindowName,
+}
+
+impl SocketTransport {
+    pub fn new(window: WindowName) -> Self {
+        Self { window }
+    }
+}
 
 impl Transport for SocketTransport {
     fn send(&self, request: Request) -> Result<Response> {
-        let name = SocketName::resolve()?;
+        let name = SocketName::resolve(&self.window)?;
         let stream = Stream::connect(name).map_err(|_| DesktopError::AppNotRunning)?;
         let mut writer = &stream;
         writer.write_all(serde_json::to_string(&request)?.as_bytes())?;

@@ -1,5 +1,6 @@
 use crate::ipc::name::SocketName;
 use crate::ipc::protocol::{Request, RequestHandler, Response};
+use crate::window_name::WindowName;
 use interprocess::local_socket::{prelude::*, ListenerOptions, Stream};
 use std::io::{self, BufRead, BufReader, Write};
 use std::sync::Arc;
@@ -7,16 +8,17 @@ use std::thread;
 
 pub struct IpcServer {
     handler: Arc<dyn RequestHandler>,
+    window: WindowName,
 }
 
 impl IpcServer {
-    pub fn new(handler: Arc<dyn RequestHandler>) -> Self {
-        Self { handler }
+    pub fn new(handler: Arc<dyn RequestHandler>, window: WindowName) -> Self {
+        Self { handler, window }
     }
 
     pub fn start(self) -> io::Result<()> {
-        SocketName::remove_stale();
-        let listener = ListenerOptions::new().name(SocketName::resolve()?).create_sync()?;
+        SocketName::remove_stale(&self.window);
+        let listener = ListenerOptions::new().name(SocketName::resolve(&self.window)?).create_sync()?;
         thread::Builder::new().name("ipc-server".into()).spawn(move || {
             for connection in listener.incoming() {
                 match connection {

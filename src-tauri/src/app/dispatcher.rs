@@ -3,6 +3,7 @@ use crate::app::files::PageFiles;
 use crate::config::AppConfig;
 use crate::app::window::WindowControl;
 use crate::ipc::protocol::{Request, RequestHandler, Response, COMMAND_FOCUS, COMMAND_STATUS};
+use crate::window_name::WindowName;
 use serde_json::{json, Value};
 use std::sync::Arc;
 
@@ -11,11 +12,18 @@ pub struct Dispatcher {
     page: Arc<dyn PageChannel>,
     window: Arc<dyn WindowControl>,
     files: Arc<PageFiles>,
+    window_name: WindowName,
 }
 
 impl Dispatcher {
-    pub fn new(config: AppConfig, page: Arc<dyn PageChannel>, window: Arc<dyn WindowControl>, files: Arc<PageFiles>) -> Self {
-        Self { config, page, window, files }
+    pub fn new(
+        config: AppConfig,
+        page: Arc<dyn PageChannel>,
+        window: Arc<dyn WindowControl>,
+        files: Arc<PageFiles>,
+        window_name: WindowName,
+    ) -> Self {
+        Self { config, page, window, files, window_name }
     }
 
     fn grant(&self, request: &Request) {
@@ -29,6 +37,7 @@ impl Dispatcher {
     fn status(&self) -> Response {
         Response::success(json!({
             "version": self.config.version,
+            "window": self.window_name.as_str(),
             "web_url": self.config.web_url,
             "page_ready": self.page.is_ready(),
         }))

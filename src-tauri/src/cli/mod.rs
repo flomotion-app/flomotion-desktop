@@ -9,6 +9,9 @@ use std::path::PathBuf;
 #[derive(Parser, Debug)]
 #[command(name = "flomotion", version, about = "FloMotion desktop shell and CLI")]
 pub struct Cli {
+    /// Name of the window to open or address, default "flomotion". Also FLOMOTION_WINDOW.
+    #[arg(long, global = true)]
+    pub window: Option<String>,
     #[command(subcommand)]
     pub command: Option<Command>,
 }

@@ -19,7 +19,8 @@ Then run `flomotion status`. Open a new terminal first if the path was just chan
 
 ## Commands
 
-- `flomotion status` shows whether the desktop app is running and the page is connected.
+- `flomotion status` shows whether the desktop app is running, whether the page is connected, and which window it is addressing.
+- `flomotion --window <name> ...`, or the `FLOMOTION_WINDOW` environment variable, drives a separate window with its own session. Use it when another agent may be using this machine; without it every agent shares one window.
 - `flomotion agent` prints the current state as JSON: `role`, `system_prompt`, `tools`, `live_context`, and the open project and item. Read `system_prompt` and follow it. Pass `--reset` to start over from no project.
 - `flomotion act <tool> '<json input>'` runs one tool and prints its result as JSON. Use `-f file.json` for large inputs. The output includes `changed`; when it is true, the response also carries a new `tools` list and possibly a new `system_prompt`, so re-read them.
 - Some tools start a background job, for example validation or G-code generation. `act` waits up to 90 seconds for it (change with `--wait`). If the output says the job is still pending, run `flomotion job <id>` to keep waiting.
