@@ -2,6 +2,7 @@ pub mod files;
 pub mod imports;
 pub mod launcher;
 pub mod runner;
+pub mod uploads;
 
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
@@ -38,6 +39,10 @@ pub enum Command {
         /// Seconds to wait for a batch job before returning its pending state
         #[arg(long, default_value_t = 90)]
         wait: u64,
+        /// A local file the tool needs: its type is filled into the input, and the
+        /// upload the tool hands back is performed and confirmed before returning
+        #[arg(long)]
+        file: Option<PathBuf>,
     },
     /// Keep waiting for a batch job started by a previous act
     Job {

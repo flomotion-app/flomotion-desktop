@@ -1,6 +1,7 @@
 use crate::cli::files::FileMaterializer;
 use crate::cli::imports::{ImportPayload, ImportTransport};
 use crate::cli::launcher::AppLauncher;
+use crate::cli::uploads::{PendingUpload, UploadTransport};
 use crate::cli::Command;
 use crate::error::{DesktopError, Result};
 use crate::ipc::protocol::{Request, Response, Transport};
@@ -11,17 +12,25 @@ use std::time::{Duration, Instant};
 
 const SKILL_TEXT: &str = include_str!("../../../AGENT.md");
 const POLL_INTERVAL: Duration = Duration::from_millis(250);
+const CONTENT_TYPE_FIELD: &str = "content_type";
 
 pub struct CliRunner {
     transport: Box<dyn Transport>,
     launcher: Box<dyn AppLauncher>,
     files: FileMaterializer,
+    uploads: Box<dyn UploadTransport>,
     start_timeout: Duration,
 }
 
 impl CliRunner {
-    pub fn new(transport: Box<dyn Transport>, launcher: Box<dyn AppLauncher>, files: FileMaterializer, start_timeout: Duration) -> Self {
-        Self { transport, launcher, files, start_timeout }
+    pub fn new(
+        transport: Box<dyn Transport>,
+        launcher: Box<dyn AppLauncher>,
+        files: FileMaterializer,
+        uploads: Box<dyn UploadTransport>,
+        start_timeout: Duration,
+    ) -> Self {
+        Self { transport, launcher, files, uploads, start_timeout }
     }
 
     pub fn run(&self, command: Command, out: &mut dyn Write) -> Result<()> {
@@ -29,9 +38,12 @@ impl CliRunner {
             Command::Skill => return Ok(out.write_all(SKILL_TEXT.as_bytes())?),
             Command::Status => self.status()?,
             Command::Agent { reset } => self.call("agent", json!({ "reset": reset }))?,
-            Command::Act { name, input, input_file, wait } => {
+            Command::Act { name, input, input_file, wait, file } => {
                 let input = Self::parse_input(input, input_file.as_deref())?;
-                self.call("act", json!({ "name": name, "input": input, "wait": wait }))?
+                match file {
+                    Some(path) => self.act_with_file(&name, input, &path, wait)?,
+                    None => self.act(&name, input, wait)?,
+                }
             }
             Command::Job { id, wait } => self.call("job", json!({ "job_id": id, "wait": wait }))?,
             Command::Import { path, transport } => {
@@ -60,6 +72,54 @@ impl CliRunner {
         self.ensure_page_ready()?;
         let response = self.transport.send(Request::new(command, payload))?;
         self.files.materialize(Self::unwrap(response)?)
+    }
+
+    fn act(&self, name: &str, input: Value, wait: u64) -> Result<Value> {
+        self.call("act", json!({ "name": name, "input": input, "wait": wait }))
+    }
+
+    fn act_with_file(&self, name: &str, mut input: Value, path: &Path, wait: u64) -> Result<Value> {
+        let metadata = std::fs::metadata(path)
+            .map_err(|e| DesktopError::Remote(format!("cannot read {}: {e}", path.display())))?;
+        if !metadata.is_file() {
+            return Err(DesktopError::Remote(format!("{} is not a file", path.display())));
+        }
+        if input.get(CONTENT_TYPE_FIELD).is_none() {
+            input[CONTENT_TYPE_FIELD] = Value::String(Self::content_type(path)?);
+        }
+        let started = self.act(name, input, wait)?;
+        let Some(upload) = PendingUpload::find(&started["result"])? else {
+            return Ok(started);
+        };
+        self.uploads.put(&upload.url, &upload.headers, path)?;
+        let (confirm, confirm_input) = upload.confirm_call()?;
+        self.act(&confirm, confirm_input, wait)
+    }
+
+    fn content_type(path: &Path) -> Result<String> {
+        let extension = path
+            .extension()
+            .map(|e| e.to_string_lossy().to_lowercase())
+            .unwrap_or_default();
+        let known = match extension.as_str() {
+            "png" => "image/png",
+            "jpg" | "jpeg" => "image/jpeg",
+            "webp" => "image/webp",
+            "gif" => "image/gif",
+            "pdf" => "application/pdf",
+            "mp4" => "video/mp4",
+            "mov" => "video/quicktime",
+            "webm" => "video/webm",
+            "txt" => "text/plain",
+            "csv" => "text/csv",
+            "zip" => "application/zip",
+            other => {
+                return Err(DesktopError::Remote(format!(
+                    "cannot tell the type of '{other}' files; put \"{CONTENT_TYPE_FIELD}\" in the input"
+                )))
+            }
+        };
+        Ok(known.into())
     }
 
     fn ensure_page_ready(&self) -> Result<()> {

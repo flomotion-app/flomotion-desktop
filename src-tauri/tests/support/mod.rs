@@ -3,12 +3,13 @@
 use flomotion_desktop_lib::app::bridge::PageChannel;
 use flomotion_desktop_lib::app::window::WindowControl;
 use flomotion_desktop_lib::cli::files::FileStore;
+use flomotion_desktop_lib::cli::uploads::UploadTransport;
 use flomotion_desktop_lib::cli::launcher::AppLauncher;
 use flomotion_desktop_lib::config::AppConfig;
 use flomotion_desktop_lib::error::{DesktopError, Result};
 use flomotion_desktop_lib::ipc::protocol::{Request, Response, Transport};
 use serde_json::json;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -128,5 +129,34 @@ impl FileStore for FakeStore {
     fn store(&self, name: &str, bytes: &[u8], dir: Option<&std::path::Path>) -> Result<PathBuf> {
         self.written.lock().unwrap().push((name.to_string(), bytes.to_vec()));
         Ok(dir.map(|d| d.join(name)).unwrap_or_else(|| PathBuf::from(format!("/tmp/{name}"))))
+    }
+}
+
+pub type UploadLog = Arc<Mutex<Vec<(String, Vec<(String, String)>, PathBuf)>>>;
+
+pub struct FakeUploads {
+    puts: UploadLog,
+    fail: Option<String>,
+}
+
+impl FakeUploads {
+    pub fn new() -> (Self, UploadLog) {
+        let puts = Arc::new(Mutex::new(vec![]));
+        (Self { puts: Arc::clone(&puts), fail: None }, puts)
+    }
+
+    pub fn failing(message: &str) -> (Self, UploadLog) {
+        let puts = Arc::new(Mutex::new(vec![]));
+        (Self { puts: Arc::clone(&puts), fail: Some(message.to_owned()) }, puts)
+    }
+}
+
+impl UploadTransport for FakeUploads {
+    fn put(&self, url: &str, headers: &[(String, String)], path: &Path) -> Result<()> {
+        self.puts.lock().unwrap().push((url.to_owned(), headers.to_vec(), path.to_path_buf()));
+        match &self.fail {
+            Some(message) => Err(DesktopError::Remote(message.clone())),
+            None => Ok(()),
+        }
     }
 }

@@ -6,6 +6,7 @@ pub mod ipc;
 pub mod window_name;
 
 use cli::files::{FileMaterializer, TempFileStore};
+use cli::uploads::HttpUploadTransport;
 use cli::launcher::ProcessLauncher;
 use cli::runner::CliRunner;
 use cli::Command;
@@ -23,6 +24,7 @@ pub fn run_cli(command: Command, window: WindowName) -> i32 {
         Box::new(SocketTransport::new(window.clone())),
         Box::new(ProcessLauncher::new(window)),
         FileMaterializer::new(Box::new(TempFileStore::new())),
+        Box::new(HttpUploadTransport),
         config.app_start_timeout,
     );
     let mut stdout = std::io::stdout().lock();
