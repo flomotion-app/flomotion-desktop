@@ -45,7 +45,7 @@ impl CliRunner {
                     None => self.act(&name, input, wait)?,
                 }
             }
-            Command::Job { id, wait } => self.call("job", json!({ "job_id": id, "wait": wait }))?,
+            Command::Job { id, wait } => self.call("job", Self::with_wait(json!({ "job_id": id }), wait))?,
             Command::Import { path, transport } => {
                 let payload = ImportPayload::build(&path, ImportTransport::parse(transport.as_deref())?)?;
                 self.call("import", payload)?
@@ -74,11 +74,18 @@ impl CliRunner {
         self.files.materialize(Self::unwrap(response)?)
     }
 
-    fn act(&self, name: &str, input: Value, wait: u64) -> Result<Value> {
-        self.call("act", json!({ "name": name, "input": input, "wait": wait }))
+    fn act(&self, name: &str, input: Value, wait: Option<u64>) -> Result<Value> {
+        self.call("act", Self::with_wait(json!({ "name": name, "input": input }), wait))
     }
 
-    fn act_with_file(&self, name: &str, mut input: Value, path: &Path, wait: u64) -> Result<Value> {
+    fn with_wait(mut payload: Value, wait: Option<u64>) -> Value {
+        if let Some(seconds) = wait {
+            payload["wait"] = json!(seconds);
+        }
+        payload
+    }
+
+    fn act_with_file(&self, name: &str, mut input: Value, path: &Path, wait: Option<u64>) -> Result<Value> {
         let metadata = std::fs::metadata(path)
             .map_err(|e| DesktopError::Remote(format!("cannot read {}: {e}", path.display())))?;
         if !metadata.is_file() {

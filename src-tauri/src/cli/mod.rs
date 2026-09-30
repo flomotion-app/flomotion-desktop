@@ -36,9 +36,9 @@ pub enum Command {
         /// Read the JSON input from a file instead
         #[arg(short = 'f', long)]
         input_file: Option<PathBuf>,
-        /// Seconds to wait for a batch job before returning its pending state
-        #[arg(long, default_value_t = 90)]
-        wait: u64,
+        /// Seconds to wait for a batch job before returning it pending, the page decides when omitted
+        #[arg(long)]
+        wait: Option<u64>,
         /// A local file the tool needs: its type is filled into the input, and the
         /// upload the tool hands back is performed and confirmed before returning
         #[arg(long)]
@@ -48,9 +48,9 @@ pub enum Command {
     Job {
         /// Job id printed by act
         id: String,
-        /// Seconds to wait before returning the pending state
-        #[arg(long, default_value_t = 90)]
-        wait: u64,
+        /// Seconds to wait before returning the pending state, the page decides when omitted
+        #[arg(long)]
+        wait: Option<u64>,
     },
     /// Import a file into the open project: a STEP model into the focused workspace, or a MuJoCo MJCF zip as a new workspace
     Import {

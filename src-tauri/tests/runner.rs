@@ -31,7 +31,7 @@ fn build(transport: FakeTransport, launcher: FakeLauncher, store: FakeStore, log
 }
 
 fn act(name: &str, input: Option<&str>) -> Command {
-    Command::Act { name: name.into(), input: input.map(String::from), input_file: None, wait: 1, file: None }
+    Command::Act { name: name.into(), input: input.map(String::from), input_file: None, wait: Some(1), file: None }
 }
 
 fn output(out: Vec<u8>) -> Value {
@@ -81,17 +81,26 @@ fn act_waits_until_the_page_is_ready() {
 fn act_passes_the_wait_limit_to_the_page() {
     let (runner, log, _) = runner(vec![ready(), Ok(Response::success(json!({"result": {"job_id": "j1"}})))]);
     let mut out = Vec::new();
-    let command = Command::Act { name: "validate".into(), input: None, input_file: None, wait: 30, file: None };
+    let command = Command::Act { name: "validate".into(), input: None, input_file: None, wait: Some(30), file: None };
     runner.run(command, &mut out).unwrap();
     assert_eq!(log.sent.lock().unwrap()[1].payload["wait"], 30);
     assert_eq!(output(out)["result"]["job_id"], "j1");
 }
 
 #[test]
+fn act_without_wait_leaves_the_default_to_the_page() {
+    let (runner, log, _) = runner(vec![ready(), Ok(Response::success(json!({"result": {"job_id": "j1"}})))]);
+    let mut out = Vec::new();
+    let command = Command::Act { name: "validate".into(), input: None, input_file: None, wait: None, file: None };
+    runner.run(command, &mut out).unwrap();
+    assert!(log.sent.lock().unwrap()[1].payload.get("wait").is_none());
+}
+
+#[test]
 fn job_command_is_forwarded_with_its_wait_limit() {
     let (runner, log, _) = runner(vec![ready(), Ok(Response::success(json!({"status": "done", "result": {"summary": "ok"}})))]);
     let mut out = Vec::new();
-    runner.run(Command::Job { id: "j3".into(), wait: 5 }, &mut out).unwrap();
+    runner.run(Command::Job { id: "j3".into(), wait: Some(5) }, &mut out).unwrap();
     let sent = log.sent.lock().unwrap();
     assert_eq!(sent[1].command, "job");
     assert_eq!(sent[1].payload["job_id"], "j3");
@@ -170,7 +179,7 @@ fn skill_prints_agent_instructions() {
 }
 
 fn act_with_file(name: &str, input: &str, path: &std::path::Path) -> Command {
-    Command::Act { name: name.into(), input: Some(input.into()), input_file: None, wait: 1, file: Some(path.to_path_buf()) }
+    Command::Act { name: name.into(), input: Some(input.into()), input_file: None, wait: Some(1), file: Some(path.to_path_buf()) }
 }
 
 const COVER_INPUT: &str = r#"{"listing_id":"L1","asset":"cover"}"#;
