@@ -88,6 +88,17 @@ fn act_passes_the_wait_limit_to_the_page() {
 }
 
 #[test]
+fn login_forwards_the_code_only_when_given() {
+    let (runner, log, _) = runner(vec![ready(), Ok(Response::success(json!({"url": "https://x/device?f=a"}))), ready(), Ok(Response::success(json!({"signed_in": true})))]);
+    runner.run(Command::Login { code: None }, &mut Vec::new()).unwrap();
+    runner.run(Command::Login { code: Some("u.r".into()) }, &mut Vec::new()).unwrap();
+    let sent = log.sent.lock().unwrap();
+    let logins: Vec<_> = sent.iter().filter(|r| r.command == "login").collect();
+    assert_eq!(logins[0].payload, json!({}));
+    assert_eq!(logins[1].payload, json!({ "code": "u.r" }));
+}
+
+#[test]
 fn act_without_wait_leaves_the_default_to_the_page() {
     let (runner, log, _) = runner(vec![ready(), Ok(Response::success(json!({"result": {"job_id": "j1"}})))]);
     let mut out = Vec::new();

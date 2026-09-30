@@ -44,6 +44,12 @@ pub enum Command {
         #[arg(long)]
         file: Option<PathBuf>,
     },
+    /// Sign this window in: without a code prints a link for the user to approve, with the code the user got signs in
+    Login {
+        /// One-time code shown in the browser after approving the link
+        #[arg(long)]
+        code: Option<String>,
+    },
     /// Keep waiting for a batch job started by a previous act
     Job {
         /// Job id printed by act

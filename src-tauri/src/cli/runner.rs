@@ -45,6 +45,7 @@ impl CliRunner {
                     None => self.act(&name, input, wait)?,
                 }
             }
+            Command::Login { code } => self.call("login", Self::login_payload(code))?,
             Command::Job { id, wait } => self.call("job", Self::with_wait(json!({ "job_id": id }), wait))?,
             Command::Import { path, transport } => {
                 let payload = ImportPayload::build(&path, ImportTransport::parse(transport.as_deref())?)?;
@@ -76,6 +77,13 @@ impl CliRunner {
 
     fn act(&self, name: &str, input: Value, wait: Option<u64>) -> Result<Value> {
         self.call("act", Self::with_wait(json!({ "name": name, "input": input }), wait))
+    }
+
+    fn login_payload(code: Option<String>) -> Value {
+        match code {
+            Some(code) => json!({ "code": code }),
+            None => json!({}),
+        }
     }
 
     fn with_wait(mut payload: Value, wait: Option<u64>) -> Value {

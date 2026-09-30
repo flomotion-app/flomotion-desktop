@@ -29,7 +29,12 @@ Then run `flomotion status`. Open a new terminal first if the path was just chan
 - `flomotion export <kind> [--id <component>] [--out <dir>]` writes an export of the focused item to disk and prints the paths. Kinds: `step` and `stl` for one component, `assembly_step` for the whole workspace, `gcode` for a CAM result, `kicad` for a schematic's symbols.
 - `flomotion skill` prints this text.
 
-The app opens automatically when needed. If the output says the user must sign in, ask them to sign in inside the FloMotion window and try again.
+The app opens automatically when needed. If the output says the user must sign in, sign the window in with `flomotion login`:
+
+1. Run `flomotion login`. It prints a link. Give the link to the user and ask them to open it in a browser where they are signed in to FloMotion, approve, and send you the code it shows.
+2. Run `flomotion login --code <code>`. The window is now signed in as the user; the output says who.
+
+The code works once, for 10 minutes, and only for the window that printed the link. If it fails, start again from step 1. You never see or store the user's password or token.
 
 ## How the tools work
 
