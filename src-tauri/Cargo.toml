@@ -1,6 +1,6 @@
 [package]
 name = "flomotion-desktop"
-version = "0.4.1"
+version = "0.4.2"
 description = "FloMotion desktop shell and CLI"
 authors = ["FloMotion"]
 license = "MIT"

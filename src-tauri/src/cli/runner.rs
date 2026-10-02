@@ -46,6 +46,7 @@ impl CliRunner {
                 }
             }
             Command::Login { code } => self.call("login", Self::login_payload(code))?,
+            Command::Diagnose => self.call("diagnose", json!({}))?,
             Command::Job { id, wait } => self.call("job", Self::with_wait(json!({ "job_id": id }), wait))?,
             Command::Import { path, transport } => {
                 let payload = ImportPayload::build(&path, ImportTransport::parse(transport.as_deref())?)?;

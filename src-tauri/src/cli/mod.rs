@@ -77,6 +77,8 @@ pub enum Command {
         #[arg(short = 'o', long)]
         out: Option<PathBuf>,
     },
+    /// Print the window's live state and its recent command log, to see where a command stopped
+    Diagnose,
     /// Print the instructions an AI agent needs to drive FloMotion
     Skill,
 }
