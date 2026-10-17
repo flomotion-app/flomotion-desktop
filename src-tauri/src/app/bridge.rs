@@ -10,6 +10,7 @@ use std::time::Duration;
 use tauri::{AppHandle, Emitter};
 
 pub const REQUEST_EVENT: &str = "cli-request";
+pub const PAGE_RELOADED: &str = "The FloMotion page reloaded while this command was running. Retry it; if the window stays blank, reload it (Ctrl+R).";
 
 pub trait PageChannel: Send + Sync {
     fn is_ready(&self) -> bool;
@@ -44,6 +45,14 @@ impl WebviewBridge {
 
     pub fn set_ready(&self) {
         self.ready.store(true, Ordering::SeqCst);
+    }
+
+    pub fn page_unloaded(&self) {
+        self.ready.store(false, Ordering::SeqCst);
+        let pending: Vec<Sender<Response>> = self.pending.lock().expect("pending lock").drain().map(|(_, sender)| sender).collect();
+        for sender in pending {
+            let _ = sender.send(Response::failure(PAGE_RELOADED));
+        }
     }
 
     pub fn complete(&self, id: u64, response: Response) {

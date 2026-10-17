@@ -11,6 +11,7 @@ use crate::ipc::server::IpcServer;
 use bridge::WebviewBridge;
 use dispatcher::Dispatcher;
 use std::sync::Arc;
+use tauri::webview::PageLoadEvent;
 use tauri::Manager;
 use files::{PageFiles, TauriAssetScope};
 use window::{TauriWindowControl, WindowFactory};
@@ -31,6 +32,13 @@ pub fn run(config: AppConfig, window_name: WindowName) {
             IpcServer::new(dispatcher, window_name.clone()).start()?;
             WindowFactory::new(config.clone(), window_name.clone()).open(app.handle())?;
             Ok(())
+        })
+        .on_page_load(|webview, payload| {
+            if matches!(payload.event(), PageLoadEvent::Started) {
+                if let Some(bridge) = webview.try_state::<Arc<WebviewBridge>>() {
+                    bridge.page_unloaded();
+                }
+            }
         })
         .invoke_handler(tauri::generate_handler![commands::cli_ready, commands::cli_respond, commands::cli_file_url])
         .run(tauri::generate_context!())
