@@ -1,6 +1,7 @@
 use crate::config::AppConfig;
 use crate::window_name::WindowName;
 use std::error::Error;
+use tauri::utils::config::BackgroundThrottlingPolicy;
 use tauri::{AppHandle, Manager, Url, WebviewUrl, WebviewWindowBuilder};
 
 const WINDOW_LABEL: &str = "main";
@@ -47,6 +48,7 @@ impl WindowFactory {
         let mut builder = WebviewWindowBuilder::new(app, WINDOW_LABEL, self.url()?)
             .title(&self.title())
             .inner_size(1400.0, 900.0)
+            .background_throttling(BackgroundThrottlingPolicy::Disabled)
             .initialization_script(&self.marker_script());
         // Two windows cannot share one webview profile, so a named window gets its own.
         if let Some(directory) = self.data_directory(app) {
