@@ -1,0 +1,36 @@
+name: mac-hidden
+
+on:
+  push:
+    branches: [test/mac-hidden]
+  workflow_dispatch:
+    inputs:
+      web_url:
+        description: Site the window loads
+        default: https://feature.flomotion.app
+        required: true
+
+jobs:
+  hidden:
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [v0.4.3]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Download ${{ matrix.version }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download ${{ matrix.version }} -p flomotion-macos-arm64.tar.gz
+          tar xzf flomotion-macos-arm64.tar.gz
+      - name: Hidden window loop
+        env:
+          FLOMOTION_URL: ${{ inputs.web_url || 'https://feature.flomotion.app' }}
+        run: bash ci/smoke/mac_hidden.sh "$PWD/flomotion/flomotion" 9
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: mac-hidden-${{ matrix.version }}
+          path: smoke-out
