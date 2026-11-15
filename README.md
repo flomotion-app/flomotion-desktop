@@ -55,6 +55,10 @@ flomotion export <kind> [--id X] [--out DIR]   write STEP, STL, G-code or KiCad 
 flomotion skill           print the agent instructions
 ```
 
+## Boards over USB
+
+The shell gives the hosted page native access to USB serial boards, so ESP32 boards work the same on all three systems without a port picker. The page calls `serial_ports`, `serial_open`, `serial_close` and `serial_flash` and listens to `serial-ports`, `serial-data`, `serial-closed` and `serial-flash-progress`. Ports are recognised by their USB chip (CP210x, CH340, CH9102, FTDI, Espressif native USB) and flashing uses [espflash](https://github.com/esp-rs/espflash). On Linux the user needs to be in the `dialout` group (`sudo usermod -aG dialout $USER`, then log in again).
+
 ## Development
 
 Requires Rust stable and Node 20+.

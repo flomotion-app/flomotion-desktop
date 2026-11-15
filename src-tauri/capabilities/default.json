@@ -15,6 +15,10 @@
     "core:default",
     "allow-cli-ready",
     "allow-cli-respond",
-    "allow-cli-file-url"
+    "allow-cli-file-url",
+    "allow-serial-ports",
+    "allow-serial-open",
+    "allow-serial-close",
+    "allow-serial-flash"
   ]
 }
