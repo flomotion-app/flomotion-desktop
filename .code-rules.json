@@ -1,0 +1,21 @@
+{
+    "compositionRoots": [
+        "*.config.ts",
+        "*_tests.rs",
+        "*/tests/",
+        "*/benches/",
+        "*/src/main.rs",
+        "*.worker.ts",
+        "tests/",
+        "scripts/",
+        "app/jobs/worker.py",
+        "app/ml/ml_worker.py",
+        "src/main.ts",
+        "src/entry-client.ts",
+        "src/entry-server.ts",
+        "app/main.py",
+        "app/composition.py",
+        "*/app/commands.rs",
+        "*/serial/commands.rs"
+    ]
+}

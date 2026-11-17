@@ -14,17 +14,12 @@ impl ProcessLauncher {
         Self { window }
     }
 
-    // The arguments the spawned window is started with, so a CLI run under a
-    // name always brings up a window of that name.
-    pub fn args(window: &WindowName) -> Vec<String> {
-        vec!["--window".to_string(), window.as_str().to_string()]
-    }
 }
 
 impl AppLauncher for ProcessLauncher {
     fn launch(&self) -> Result<()> {
         let exe = std::env::current_exe()?;
-        platform::spawn_detached(&exe, self.window.as_str())
+        platform::spawn_detached(&exe, &self.window)
     }
 }
 
@@ -34,9 +29,9 @@ mod platform {
     use std::path::Path;
     use std::process::{Command, Stdio};
 
-    pub fn spawn_detached(exe: &Path, window: &str) -> Result<()> {
+    pub fn spawn_detached(exe: &Path, window: &crate::window_name::WindowName) -> Result<()> {
         Command::new(exe)
-            .args(super::ProcessLauncher::args(&crate::window_name::WindowName::parse(window).unwrap_or_default()))
+            .args(window.launch_args())
             .stdin(Stdio::null())
             .stdout(Stdio::null())
             .stderr(Stdio::null())
@@ -57,7 +52,8 @@ mod platform {
         CreateProcessW, CREATE_NEW_PROCESS_GROUP, DETACHED_PROCESS, PROCESS_INFORMATION, STARTUPINFOW,
     };
 
-    pub fn spawn_detached(exe: &Path, window: &str) -> Result<()> {
+    pub fn spawn_detached(exe: &Path, window: &crate::window_name::WindowName) -> Result<()> {
+        let window = window.as_str();
         let mut command_line = quoted_wide(exe.as_os_str(), window);
         let mut startup: STARTUPINFOW = unsafe { std::mem::zeroed() };
         startup.cb = std::mem::size_of::<STARTUPINFOW>() as u32;

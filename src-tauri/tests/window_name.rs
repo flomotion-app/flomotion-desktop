@@ -46,10 +46,9 @@ fn allowed_characters_are_letters_digits_underscore_and_dash() {
 
 #[test]
 fn the_launcher_passes_the_window_name_to_the_spawned_app() {
-    use flomotion_desktop_lib::cli::launcher::ProcessLauncher;
-    assert_eq!(ProcessLauncher::args(&WindowName::default()), vec!["--window", "flomotion"]);
+        assert_eq!(WindowName::default().launch_args(), vec!["--window", "flomotion"]);
     assert_eq!(
-        ProcessLauncher::args(&WindowName::parse("data-entry").unwrap()),
+        WindowName::parse("data-entry").unwrap().launch_args(),
         vec!["--window", "data-entry"]
     );
 }

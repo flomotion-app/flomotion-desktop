@@ -21,7 +21,7 @@ impl AssetScope for TauriAssetScope {
         self.app
             .asset_protocol_scope()
             .allow_file(path)
-            .map_err(|e| DesktopError::Remote(format!("cannot grant access to {}: {e}", path.display())))
+            .map_err(|error| DesktopError::Remote(format!("cannot grant access to {}: {error}", path.display())))
     }
 }
 
@@ -35,38 +35,38 @@ impl PageFiles {
     }
 
     pub fn url(&self, path: &str) -> Result<String> {
-        let resolved = Self::resolve(path)?;
+        let resolved = self.resolve(path)?;
         self.scope.allow(&resolved)?;
-        Ok(Self::asset_url(&resolved))
+        Ok(self.asset_url(&resolved))
     }
 
-    fn resolve(path: &str) -> Result<PathBuf> {
-        let resolved = std::fs::canonicalize(path).map_err(|e| DesktopError::Remote(format!("cannot read {path}: {e}")))?;
+    fn resolve(&self, path: &str) -> Result<PathBuf> {
+        let resolved = std::fs::canonicalize(path).map_err(|error| DesktopError::Remote(format!("cannot read {path}: {error}")))?;
         if !resolved.is_file() {
             return Err(DesktopError::Remote(format!("{path} is not a file")));
         }
         Ok(resolved)
     }
 
-    fn asset_url(path: &Path) -> String {
+    fn asset_url(&self, path: &Path) -> String {
         let text = path.to_string_lossy();
         let plain = text.strip_prefix(r"\\?\").unwrap_or(&text);
-        let encoded = urlencoding(plain);
+        let encoded = self.urlencoding(plain);
         if cfg!(windows) {
             format!("http://asset.localhost/{encoded}")
         } else {
             format!("asset://localhost/{encoded}")
         }
     }
-}
 
-fn urlencoding(value: &str) -> String {
-    let mut out = String::with_capacity(value.len());
-    for byte in value.bytes() {
-        match byte {
-            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' | b'/' | b':' => out.push(byte as char),
-            _ => out.push_str(&format!("%{byte:02X}")),
+    fn urlencoding(&self, value: &str) -> String {
+        let mut out = String::with_capacity(value.len());
+        for byte in value.bytes() {
+            match byte {
+                b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' | b'/' | b':' => out.push(byte as char),
+                _ => out.push_str(&format!("%{byte:02X}")),
+            }
         }
+        out
     }
-    out
 }

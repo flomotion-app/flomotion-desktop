@@ -79,7 +79,7 @@ pub struct HttpUploadTransport;
 impl UploadTransport for HttpUploadTransport {
     fn put(&self, url: &str, headers: &[(String, String)], path: &Path) -> Result<()> {
         let file = std::fs::File::open(path)
-            .map_err(|e| DesktopError::Remote(format!("cannot read {}: {e}", path.display())))?;
+            .map_err(|error| DesktopError::Remote(format!("cannot read {}: {error}", path.display())))?;
         let length = file.metadata()?.len();
         let mut request = ureq::put(url);
         for (name, value) in headers {

@@ -16,5 +16,5 @@ pub fn cli_respond(bridge: State<'_, Arc<WebviewBridge>>, id: u64, response: Res
 
 #[tauri::command]
 pub fn cli_file_url(files: State<'_, Arc<PageFiles>>, path: String) -> std::result::Result<String, String> {
-    files.url(&path).map_err(|e| e.to_string())
+    files.url(&path).map_err(|error| error.to_string())
 }

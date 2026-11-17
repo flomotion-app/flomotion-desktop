@@ -50,7 +50,6 @@ impl WindowFactory {
             .inner_size(1400.0, 900.0)
             .background_throttling(BackgroundThrottlingPolicy::Disabled)
             .initialization_script(&self.marker_script());
-        // Two windows cannot share one webview profile, so a named window gets its own.
         if let Some(directory) = self.data_directory(app) {
             builder = builder.data_directory(directory);
         }
@@ -65,7 +64,6 @@ impl WindowFactory {
         format!("FloMotion ({})", self.window_name.as_str())
     }
 
-    // The default window keeps the original profile so existing sessions survive.
     fn data_directory(&self, app: &AppHandle) -> Option<std::path::PathBuf> {
         if self.window_name.is_default() {
             return None;

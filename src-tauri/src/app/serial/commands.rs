@@ -6,7 +6,7 @@ use tauri::State;
 type Hub<'a> = State<'a, Arc<SerialHub>>;
 
 async fn blocking<T: Send + 'static>(work: impl FnOnce() -> Result<T, String> + Send + 'static) -> Result<T, String> {
-    tauri::async_runtime::spawn_blocking(work).await.map_err(|e| e.to_string())?
+    tauri::async_runtime::spawn_blocking(work).await.map_err(|error| error.to_string())?
 }
 
 #[tauri::command]

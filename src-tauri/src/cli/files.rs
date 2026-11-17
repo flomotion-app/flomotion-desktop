@@ -23,7 +23,7 @@ impl TempFileStore {
     }
 
     fn unique_name(&self, name: &str) -> String {
-        let millis = SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_millis()).unwrap_or(0);
+        let millis = SystemTime::now().duration_since(UNIX_EPOCH).map(|elapsed| elapsed.as_millis()).unwrap_or(0);
         let index = self.counter.fetch_add(1, Ordering::SeqCst);
         format!("{millis}-{index}-{name}")
     }
@@ -31,7 +31,7 @@ impl TempFileStore {
 
 impl FileStore for TempFileStore {
     fn store(&self, name: &str, bytes: &[u8], dir: Option<&Path>) -> Result<PathBuf> {
-        let safe_name: String = name.chars().map(|c| if c.is_alphanumeric() || c == '.' || c == '-' || c == '_' { c } else { '_' }).collect();
+        let safe_name: String = name.chars().map(|letter| if letter.is_alphanumeric() || letter == '.' || letter == '-' || letter == '_' { letter } else { '_' }).collect();
         let path = match dir {
             Some(dir) => dir.join(safe_name),
             None => self.dir.join(self.unique_name(&safe_name)),
@@ -67,19 +67,13 @@ impl FileMaterializer {
         Ok(value)
     }
 
-    pub fn encode(path: &Path) -> Result<Value> {
-        let bytes = std::fs::read(path)?;
-        let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_else(|| "file.bin".into());
-        Ok(serde_json::json!({ "name": name, "data_base64": STANDARD.encode(bytes) }))
-    }
-
     fn write(&self, file: &Value, dir: Option<&Path>) -> Result<PathBuf> {
         let name = file.get("name").and_then(Value::as_str).unwrap_or("file.bin");
         let encoded = file
             .get("data_base64")
             .and_then(Value::as_str)
             .ok_or_else(|| DesktopError::Remote(format!("file {name} has no data_base64")))?;
-        let bytes = STANDARD.decode(encoded).map_err(|e| DesktopError::Remote(format!("file {name}: {e}")))?;
+        let bytes = STANDARD.decode(encoded).map_err(|error| DesktopError::Remote(format!("file {name}: {error}")))?;
         self.store.store(name, &bytes, dir)
     }
 }

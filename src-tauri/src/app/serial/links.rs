@@ -17,7 +17,7 @@ pub struct NativeOpener;
 
 impl PortOpener for NativeOpener {
     fn open(&self, path: &str, baud: u32) -> Result<Box<dyn Read + Send>, String> {
-        let mut port = serialport::new(path, baud).timeout(READ_TIMEOUT).open().map_err(|e| e.to_string())?;
+        let mut port = serialport::new(path, baud).timeout(READ_TIMEOUT).open().map_err(|error| error.to_string())?;
         let _ = port.write_data_terminal_ready(false);
         let _ = port.write_request_to_send(false);
         Ok(Box::new(port))

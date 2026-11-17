@@ -1,5 +1,5 @@
 use super::events::SerialEvents;
-use super::ports::{BoardPort, PortScanner};
+use super::ports::PortScanner;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -15,21 +15,19 @@ impl PortWatcher {
         Self { scanner, events }
     }
 
-    pub fn start(self) {
+    pub fn start(&self) {
+        let scanner = Arc::clone(&self.scanner);
+        let events = Arc::clone(&self.events);
         std::thread::spawn(move || {
-            let mut last = self.scanner.scan();
+            let mut last = scanner.scan();
             loop {
                 std::thread::sleep(POLL);
-                last = self.tick(last);
+                let now = scanner.scan();
+                if now != last {
+                    events.ports(&now);
+                }
+                last = now;
             }
         });
-    }
-
-    fn tick(&self, last: Vec<BoardPort>) -> Vec<BoardPort> {
-        let now = self.scanner.scan();
-        if now != last {
-            self.events.ports(&now);
-        }
-        now
     }
 }

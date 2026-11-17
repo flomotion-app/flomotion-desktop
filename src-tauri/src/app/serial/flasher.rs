@@ -22,45 +22,45 @@ impl EspFlasher {
     }
 
     fn connect(&self, path: &str, chip: Chip) -> Result<Flasher, String> {
-        let serial = serialport::new(path, BAUD).flow_control(FlowControl::None).open_native().map_err(|e| format!("cannot open {path}: {e}"))?;
-        let connection = Connection::new(serial, usb_info(path), ResetAfterOperation::HardReset, ResetBeforeOperation::DefaultReset, BAUD);
-        Flasher::connect(connection, true, true, false, Some(chip), Some(FAST_BAUD)).map_err(|e| format!("cannot connect to the board: {e}"))
+        let serial = serialport::new(path, BAUD).flow_control(FlowControl::None).open_native().map_err(|error| format!("cannot open {path}: {error}"))?;
+        let connection = Connection::new(serial, self.usb_info(path), ResetAfterOperation::HardReset, ResetBeforeOperation::DefaultReset, BAUD);
+        Flasher::connect(connection, true, true, false, Some(chip), Some(FAST_BAUD)).map_err(|error| format!("cannot connect to the board: {error}"))
+    }
+
+    fn chip_named(&self, name: &str) -> Result<Chip, String> {
+        match name {
+            "esp32" => Ok(Chip::Esp32),
+            "esp32s3" => Ok(Chip::Esp32s3),
+            "esp32c3" => Ok(Chip::Esp32c3),
+            other => Err(format!("unsupported chip {other}")),
+        }
+    }
+
+    fn usb_info(&self, path: &str) -> UsbPortInfo {
+        serialport::available_ports()
+            .unwrap_or_default()
+            .into_iter()
+            .find(|port| port.port_name == path || port.port_name.replacen("/dev/tty.", "/dev/cu.", 1) == path)
+            .and_then(|port| match port.port_type {
+                SerialPortType::UsbPort(usb) => Some(usb),
+                _ => None,
+            })
+            .unwrap_or(UsbPortInfo { vid: 0, pid: 0, serial_number: None, manufacturer: None, product: None })
     }
 }
 
 impl BoardFlasher for EspFlasher {
     fn flash(&self, path: &str, chip: &str, image: &[u8], offset: u32) -> Result<(), String> {
-        let chip = chip_named(chip)?;
+        let chip = self.chip_named(chip)?;
         self.events.flash_progress(path, "connecting", 0, image.len());
         let mut flasher = self.connect(path, chip)?;
         self.events.flash_progress(path, "erasing", 0, image.len());
         let mut progress = Progress { events: Arc::clone(&self.events), path: path.to_string(), total: image.len(), chunks: 1 };
-        flasher.write_bin_to_flash(offset, image, &mut progress).map_err(|e| format!("flashing failed: {e}"))?;
-        flasher.connection().reset_after(true, chip).map_err(|e| format!("reset failed: {e}"))?;
+        flasher.write_bin_to_flash(offset, image, &mut progress).map_err(|error| format!("flashing failed: {error}"))?;
+        flasher.connection().reset_after(true, chip).map_err(|error| format!("reset failed: {error}"))?;
         self.events.flash_progress(path, "done", image.len(), image.len());
         Ok(())
     }
-}
-
-fn chip_named(name: &str) -> Result<Chip, String> {
-    match name {
-        "esp32" => Ok(Chip::Esp32),
-        "esp32s3" => Ok(Chip::Esp32s3),
-        "esp32c3" => Ok(Chip::Esp32c3),
-        other => Err(format!("unsupported chip {other}")),
-    }
-}
-
-fn usb_info(path: &str) -> UsbPortInfo {
-    serialport::available_ports()
-        .unwrap_or_default()
-        .into_iter()
-        .find(|port| port.port_name == path || port.port_name.replacen("/dev/tty.", "/dev/cu.", 1) == path)
-        .and_then(|port| match port.port_type {
-            SerialPortType::UsbPort(usb) => Some(usb),
-            _ => None,
-        })
-        .unwrap_or(UsbPortInfo { vid: 0, pid: 0, serial_number: None, manufacturer: None, product: None })
 }
 
 struct Progress {

@@ -24,14 +24,14 @@ pub struct ConfigFile {
 
 impl AppConfig {
     pub fn from_env() -> Self {
-        let file = Self::config_path().and_then(|p| std::fs::read_to_string(p).ok());
+        let file = Self::config_path().and_then(|path| std::fs::read_to_string(path).ok());
         Self::resolve(std::env::var(URL_ENV).ok(), file.as_deref())
     }
 
     pub fn resolve(env_url: Option<String>, file_text: Option<&str>) -> Self {
-        let file: ConfigFile = file_text.and_then(|t| serde_json::from_str(t).ok()).unwrap_or_default();
+        let file: ConfigFile = file_text.and_then(|text| serde_json::from_str(text).ok()).unwrap_or_default();
         let web_url = env_url
-            .filter(|u| !u.is_empty())
+            .filter(|url| !url.is_empty())
             .or(file.web_url)
             .unwrap_or_else(|| DEFAULT_WEB_URL.to_string());
         Self {
@@ -43,7 +43,7 @@ impl AppConfig {
     }
 
     pub fn config_path() -> Option<PathBuf> {
-        directories::BaseDirs::new().map(|d| d.home_dir().join(CONFIG_DIR).join(CONFIG_FILE))
+        directories::BaseDirs::new().map(|dirs| dirs.home_dir().join(CONFIG_DIR).join(CONFIG_FILE))
     }
 
     pub fn uses_local_page(&self) -> bool {

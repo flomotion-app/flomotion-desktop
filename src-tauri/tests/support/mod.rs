@@ -8,7 +8,7 @@ use flomotion_desktop_lib::cli::launcher::AppLauncher;
 use flomotion_desktop_lib::config::AppConfig;
 use flomotion_desktop_lib::error::{DesktopError, Result};
 use flomotion_desktop_lib::ipc::protocol::{Request, Response, Transport};
-use serde_json::json;
+use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
@@ -128,7 +128,7 @@ impl FakeStore {
 impl FileStore for FakeStore {
     fn store(&self, name: &str, bytes: &[u8], dir: Option<&std::path::Path>) -> Result<PathBuf> {
         self.written.lock().unwrap().push((name.to_string(), bytes.to_vec()));
-        Ok(dir.map(|d| d.join(name)).unwrap_or_else(|| PathBuf::from(format!("/tmp/{name}"))))
+        Ok(dir.map(|folder| folder.join(name)).unwrap_or_else(|| PathBuf::from(format!("/tmp/{name}"))))
     }
 }
 
@@ -159,4 +159,12 @@ impl UploadTransport for FakeUploads {
             None => Ok(()),
         }
     }
+}
+
+pub fn act(name: &str, input: Option<&str>) -> flomotion_desktop_lib::cli::Command {
+    flomotion_desktop_lib::cli::Command::Act { name: name.into(), input: input.map(String::from), input_file: None, wait: Some(1), file: None }
+}
+
+pub fn output(out: Vec<u8>) -> Value {
+    serde_json::from_slice(&out).unwrap()
 }

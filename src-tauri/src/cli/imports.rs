@@ -1,4 +1,5 @@
-use crate::cli::files::FileMaterializer;
+use base64::engine::general_purpose::STANDARD;
+use base64::Engine;
 use crate::error::{DesktopError, Result};
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
@@ -31,14 +32,20 @@ impl ImportPayload {
         let size = std::fs::metadata(&absolute)?.len();
         let name = absolute
             .file_name()
-            .map(|n| n.to_string_lossy().into_owned())
+            .map(|file_name| file_name.to_string_lossy().into_owned())
             .ok_or_else(|| DesktopError::Remote("import needs a file, not a directory".into()))?;
         if Self::inline(transport, size)? {
-            let mut payload = FileMaterializer::encode(&absolute)?;
+            let mut payload = Self::encode(&absolute)?;
             payload["size"] = json!(size);
             return Ok(payload);
         }
         Ok(json!({ "name": name, "path": Self::for_page(&absolute), "size": size }))
+    }
+
+    pub fn encode(path: &Path) -> Result<Value> {
+        let bytes = std::fs::read(path)?;
+        let name = path.file_name().map(|file_name| file_name.to_string_lossy().into_owned()).unwrap_or_else(|| "file.bin".into());
+        Ok(json!({ "name": name, "data_base64": STANDARD.encode(bytes) }))
     }
 
     fn inline(transport: ImportTransport, size: u64) -> Result<bool> {
@@ -55,7 +62,7 @@ impl ImportPayload {
     }
 
     fn absolute(path: &Path) -> Result<PathBuf> {
-        let resolved = std::fs::canonicalize(path).map_err(|e| DesktopError::Remote(format!("cannot read {}: {e}", path.display())))?;
+        let resolved = std::fs::canonicalize(path).map_err(|error| DesktopError::Remote(format!("cannot read {}: {error}", path.display())))?;
         if !resolved.is_file() {
             return Err(DesktopError::Remote(format!("{} is not a file", resolved.display())));
         }

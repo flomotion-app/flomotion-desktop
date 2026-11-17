@@ -24,7 +24,7 @@ impl SocketName {
             .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "no home directory"))?;
         let dir = dirs
             .runtime_dir()
-            .map(|d| d.join("flomotion"))
+            .map(|dir| dir.join("flomotion"))
             .unwrap_or_else(|| dirs.home_dir().join(".flomotion").join("run"));
         std::fs::create_dir_all(&dir)?;
         std::fs::set_permissions(&dir, std::fs::Permissions::from_mode(0o700))?;

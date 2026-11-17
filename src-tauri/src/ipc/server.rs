@@ -31,22 +31,29 @@ impl IpcServer {
     }
 
     fn spawn_connection(&self, stream: Stream) {
-        let handler = Arc::clone(&self.handler);
+        let connection = Connection { stream, handler: Arc::clone(&self.handler) };
         thread::spawn(move || {
-            if let Err(error) = Self::serve(&stream, handler.as_ref()) {
+            if let Err(error) = connection.serve() {
                 eprintln!("ipc connection failed: {error}");
             }
         });
     }
+}
 
-    fn serve(stream: &Stream, handler: &dyn RequestHandler) -> io::Result<()> {
+struct Connection {
+    stream: Stream,
+    handler: Arc<dyn RequestHandler>,
+}
+
+impl Connection {
+    fn serve(&self) -> io::Result<()> {
         let mut line = String::new();
-        BufReader::new(stream).read_line(&mut line)?;
+        BufReader::new(&self.stream).read_line(&mut line)?;
         let response = match serde_json::from_str::<Request>(&line) {
-            Ok(request) => handler.handle(request),
+            Ok(request) => self.handler.handle(request),
             Err(error) => Response::failure(format!("malformed request: {error}")),
         };
-        let mut writer = stream;
+        let mut writer = &self.stream;
         writer.write_all(serde_json::to_string(&response)?.as_bytes())?;
         writer.write_all(b"\n")?;
         writer.flush()

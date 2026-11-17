@@ -27,14 +27,14 @@ class ImportedFile {
     if (payload.data_base64) {
       const binary = atob(payload.data_base64);
       const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      for (let index = 0; index < binary.length; index++) bytes[index] = binary.charCodeAt(index);
       return { file: new File([bytes], payload.name), via: "inline", attempts: ["inline"] };
     }
     if (!payload.path) throw new Error("import payload has neither path nor data_base64");
     try {
       return { file: await this.fetchFile(convertFileSrc(payload.path), payload.name), via: "assetProtocol", attempts };
-    } catch (e) {
-      attempts.push(`assetProtocol failed: ${e instanceof Error ? e.message : String(e)}`);
+    } catch (error) {
+      attempts.push(`assetProtocol failed: ${error instanceof Error ? error.message : String(error)}`);
     }
     const url = await invoke<string>("cli_file_url", { path: payload.path });
     return { file: await this.fetchFile(url, payload.name), via: "command", attempts };
@@ -64,8 +64,8 @@ class DesktopBridge {
   private async handle(request: CliRequest): Promise<CliResponse> {
     try {
       return { ok: true, result: await this.handler(request.command, request.payload) };
-    } catch (e) {
-      return { ok: false, result: null, error: e instanceof Error ? e.message : String(e) };
+    } catch (error) {
+      return { ok: false, result: null, error: error instanceof Error ? error.message : String(error) };
     }
   }
 }

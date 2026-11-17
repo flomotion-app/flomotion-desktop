@@ -39,15 +39,15 @@ impl CliRunner {
             Command::Status => self.status()?,
             Command::Agent { reset } => self.call("agent", json!({ "reset": reset }))?,
             Command::Act { name, input, input_file, wait, file } => {
-                let input = Self::parse_input(input, input_file.as_deref())?;
+                let input = self.parse_input(input, input_file.as_deref())?;
                 match file {
                     Some(path) => self.act_with_file(&name, input, &path, wait)?,
                     None => self.act(&name, input, wait)?,
                 }
             }
-            Command::Login { code } => self.call("login", Self::login_payload(code))?,
+            Command::Login { code } => self.call("login", self.login_payload(code))?,
             Command::Diagnose => self.call("diagnose", json!({}))?,
-            Command::Job { id, wait } => self.call("job", Self::with_wait(json!({ "job_id": id }), wait))?,
+            Command::Job { id, wait } => self.call("job", self.with_wait(json!({ "job_id": id }), wait))?,
             Command::Import { path, transport } => {
                 let payload = ImportPayload::build(&path, ImportTransport::parse(transport.as_deref())?)?;
                 self.call("import", payload)?
@@ -55,7 +55,7 @@ impl CliRunner {
             Command::Export { kind, id, out } => {
                 self.ensure_page_ready()?;
                 let response = self.transport.send(Request::new("export", json!({ "kind": kind, "id": id })))?;
-                self.files.materialize_into(Self::unwrap(response)?, out.as_deref())?
+                self.files.materialize_into(self.unwrap(response)?, out.as_deref())?
             }
         };
         writeln!(out, "{}", serde_json::to_string_pretty(&value)?)?;
@@ -64,7 +64,7 @@ impl CliRunner {
 
     fn status(&self) -> Result<Value> {
         match self.transport.send(Request::status()) {
-            Ok(response) => Ok(Self::unwrap(response)?),
+            Ok(response) => Ok(self.unwrap(response)?),
             Err(DesktopError::AppNotRunning) => Ok(json!({ "running": false })),
             Err(error) => Err(error),
         }
@@ -73,21 +73,21 @@ impl CliRunner {
     fn call(&self, command: &str, payload: Value) -> Result<Value> {
         self.ensure_page_ready()?;
         let response = self.transport.send(Request::new(command, payload))?;
-        self.files.materialize(Self::unwrap(response)?)
+        self.files.materialize(self.unwrap(response)?)
     }
 
     fn act(&self, name: &str, input: Value, wait: Option<u64>) -> Result<Value> {
-        self.call("act", Self::with_wait(json!({ "name": name, "input": input }), wait))
+        self.call("act", self.with_wait(json!({ "name": name, "input": input }), wait))
     }
 
-    fn login_payload(code: Option<String>) -> Value {
+    fn login_payload(&self, code: Option<String>) -> Value {
         match code {
             Some(code) => json!({ "code": code }),
             None => json!({}),
         }
     }
 
-    fn with_wait(mut payload: Value, wait: Option<u64>) -> Value {
+    fn with_wait(&self, mut payload: Value, wait: Option<u64>) -> Value {
         if let Some(seconds) = wait {
             payload["wait"] = json!(seconds);
         }
@@ -96,12 +96,12 @@ impl CliRunner {
 
     fn act_with_file(&self, name: &str, mut input: Value, path: &Path, wait: Option<u64>) -> Result<Value> {
         let metadata = std::fs::metadata(path)
-            .map_err(|e| DesktopError::Remote(format!("cannot read {}: {e}", path.display())))?;
+            .map_err(|error| DesktopError::Remote(format!("cannot read {}: {error}", path.display())))?;
         if !metadata.is_file() {
             return Err(DesktopError::Remote(format!("{} is not a file", path.display())));
         }
         if input.get(CONTENT_TYPE_FIELD).is_none() {
-            input[CONTENT_TYPE_FIELD] = Value::String(Self::content_type(path)?);
+            input[CONTENT_TYPE_FIELD] = Value::String(self.content_type(path)?);
         }
         let started = self.act(name, input, wait)?;
         let Some(upload) = PendingUpload::find(&started["result"])? else {
@@ -112,10 +112,10 @@ impl CliRunner {
         self.act(&confirm, confirm_input, wait)
     }
 
-    fn content_type(path: &Path) -> Result<String> {
+    fn content_type(&self, path: &Path) -> Result<String> {
         let extension = path
             .extension()
-            .map(|e| e.to_string_lossy().to_lowercase())
+            .map(|extension| extension.to_string_lossy().to_lowercase())
             .unwrap_or_default();
         let known = match extension.as_str() {
             "png" => "image/png",
@@ -140,7 +140,7 @@ impl CliRunner {
 
     fn ensure_page_ready(&self) -> Result<()> {
         match self.transport.send(Request::status()) {
-            Ok(response) if Self::page_ready(&response) => return Ok(()),
+            Ok(response) if self.page_ready(&response) => return Ok(()),
             Ok(_) => {}
             Err(DesktopError::AppNotRunning) => self.launcher.launch()?,
             Err(error) => return Err(error),
@@ -152,7 +152,7 @@ impl CliRunner {
         let deadline = Instant::now() + self.start_timeout;
         while Instant::now() < deadline {
             if let Ok(response) = self.transport.send(Request::status()) {
-                if Self::page_ready(&response) {
+                if self.page_ready(&response) {
                     return Ok(());
                 }
             }
@@ -161,18 +161,18 @@ impl CliRunner {
         Err(DesktopError::AppStartTimeout(self.start_timeout.as_secs()))
     }
 
-    fn page_ready(response: &Response) -> bool {
+    fn page_ready(&self, response: &Response) -> bool {
         response.ok && response.result["page_ready"] == Value::Bool(true)
     }
 
-    fn unwrap(response: Response) -> Result<Value> {
+    fn unwrap(&self, response: Response) -> Result<Value> {
         if response.ok {
             return Ok(response.result);
         }
         Err(DesktopError::Remote(response.error.unwrap_or_else(|| "unknown error".into())))
     }
 
-    fn parse_input(inline: Option<String>, file: Option<&Path>) -> Result<Value> {
+    fn parse_input(&self, inline: Option<String>, file: Option<&Path>) -> Result<Value> {
         let text = match (inline, file) {
             (_, Some(path)) => std::fs::read_to_string(path)?,
             (Some(text), None) => text,

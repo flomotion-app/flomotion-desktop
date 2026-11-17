@@ -15,7 +15,7 @@ impl WindowName {
                 value.len()
             )));
         }
-        if !value.chars().all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-') {
+        if !value.chars().all(|letter| letter.is_ascii_alphanumeric() || letter == '_' || letter == '-') {
             return Err(DesktopError::Remote(format!(
                 "window name '{value}' may only contain letters, digits, underscore and dash"
             )));
@@ -23,12 +23,15 @@ impl WindowName {
         Ok(Self(value.to_string()))
     }
 
-    // Flag wins over the environment, which wins over the default.
     pub fn resolve(flag: Option<&str>, env: Option<String>) -> Result<Self> {
-        match flag.or(env.as_deref()).filter(|v| !v.is_empty()) {
+        match flag.or(env.as_deref()).filter(|value| !value.is_empty()) {
             Some(value) => Self::parse(value),
             None => Ok(Self::default()),
         }
+    }
+
+    pub fn launch_args(&self) -> Vec<String> {
+        vec!["--window".to_string(), self.as_str().to_string()]
     }
 
     pub fn from_env(flag: Option<&str>) -> Result<Self> {
