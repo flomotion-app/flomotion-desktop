@@ -6,6 +6,7 @@ fn known_usb_chips_are_named() {
     assert_eq!(BoardPort::chip_for(0x10C4, 0xEA60), "cp210x");
     assert_eq!(BoardPort::chip_for(0x1A86, 0x7523), "ch340");
     assert_eq!(BoardPort::chip_for(0x1A86, 0x55D4), "ch9102");
+    assert_eq!(BoardPort::chip_for(0x1A86, 0x55D3), "ch343");
     assert_eq!(BoardPort::chip_for(0x0403, 0x6001), "ftdi");
     assert_eq!(BoardPort::chip_for(0x0403, 0x6015), "ftdi");
     assert_eq!(BoardPort::chip_for(0x303A, 0x1001), "espressif");
