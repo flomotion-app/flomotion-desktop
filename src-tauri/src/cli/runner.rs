@@ -129,11 +129,7 @@ impl CliRunner {
             "txt" => "text/plain",
             "csv" => "text/csv",
             "zip" => "application/zip",
-            other => {
-                return Err(DesktopError::Remote(format!(
-                    "cannot tell the type of '{other}' files; put \"{CONTENT_TYPE_FIELD}\" in the input"
-                )))
-            }
+            _ => "application/octet-stream",
         };
         Ok(known.into())
     }
