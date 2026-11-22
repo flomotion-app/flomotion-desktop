@@ -114,15 +114,18 @@ fn a_failed_upload_does_not_confirm() {
 }
 
 #[test]
-fn unknown_file_types_are_refused_before_anything_is_called() {
-    let path = image("banner.xyz");
-    let (uploads, puts) = FakeUploads::new();
-    let (runner, calls) = attach_runner(uploads, vec![]);
+fn unknown_file_types_are_sent_as_octet_stream() {
+    let path = image("firmware.bin");
+    let (uploads, _) = FakeUploads::new();
+    let (runner, calls) = attach_runner(uploads, vec![
+        ready(),
+        Ok(Response::success(act_response(json!({ "status": "already set" })))),
+    ]);
     let mut out = vec![];
-    let error = runner.run(act_with_file("attach_robot_media", COVER_INPUT, &path), &mut out).unwrap_err();
-    assert!(error.to_string().contains("content_type"), "{error}");
-    assert!(puts.lock().unwrap().is_empty());
-    assert!(calls.sent.lock().unwrap().is_empty(), "nothing should have been sent");
+    runner.run(act_with_file("put_codebase_data_file", COVER_INPUT, &path), &mut out).unwrap();
+    let sent = calls.sent.lock().unwrap();
+    let first = sent.iter().find(|request| request.command == "act").unwrap();
+    assert_eq!(first.payload["input"]["content_type"], "application/octet-stream");
 }
 
 #[test]
