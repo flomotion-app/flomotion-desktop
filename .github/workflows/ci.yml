@@ -85,7 +85,9 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force dist-pkg/flomotion | Out-Null
+          cargo build --release --manifest-path console/Cargo.toml --target ${{ matrix.target }}
           Copy-Item src-tauri/target/${{ matrix.target }}/release/flomotion-desktop.exe dist-pkg/flomotion/flomotion.exe
+          Copy-Item console/target/${{ matrix.target }}/release/flomotion-console.exe dist-pkg/flomotion/flomotion.com
           Copy-Item AGENT.md, LICENSE, README.md dist-pkg/flomotion/
           Compress-Archive -Path dist-pkg/flomotion -DestinationPath ${{ matrix.archive }}
       - uses: softprops/action-gh-release@v2

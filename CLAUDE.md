@@ -12,3 +12,7 @@ Rules:
 - Commit messages short, no authorship lines.
 - Never commit or push until explicitly told to. Approval for one changeset never carries over to the next.
 - Don't use the AskUserQuestion tool. When a decision is needed, list the options inline and let me pick.
+
+## Showing results: remote tools, not artifacts
+
+Never create claude.ai artifacts. To show the user a page, report, comparison, image or a small tool, use the remote tools at https://remote.flomotion.app (`C:\Programming\flomotion\remote-utils`): docs (`docs-stage`), shares and drops (`config.json` shares, `drops/`), 3D and image Compare (`mesh-stage/pairs.json`, viewer at `/mesh/v/<slug>`), QA docs (`qa-stage`). When none fits, ask flomotion-manager to build the tool as a new remote-utils stage instead of making an artifact.

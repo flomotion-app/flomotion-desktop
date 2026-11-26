@@ -25,7 +25,7 @@ Manual install is the same thing by hand. Each archive contains one folder `flom
 | Linux x86_64 | `flomotion-linux-x86_64.tar.gz` | `tar -xzf`, copy `flomotion/flomotion` somewhere on PATH, `sudo apt-get install libwebkit2gtk-4.1-0` |
 | macOS arm64 | `flomotion-macos-arm64.tar.gz` | `tar -xzf`, copy `flomotion/flomotion` somewhere on PATH |
 | macOS x86_64 | `flomotion-macos-x86_64.tar.gz` | same |
-| Windows x86_64 | `flomotion-windows-x86_64.zip` | extract, put `flomotion\flomotion.exe` on PATH |
+| Windows x86_64 | `flomotion-windows-x86_64.zip` | extract, put `flomotion\flomotion.exe` and `flomotion\flomotion.com` on PATH |
 
 The archives are not code signed. The macOS binaries are ad-hoc signed, which is enough to run a file fetched with curl or tar rather than a browser download. Windows needs the WebView2 runtime, present on Windows 11 and most Windows 10 machines. Anyone who prefers not to run an unsigned binary can build from source, see below.
 
@@ -89,6 +89,8 @@ FLOMOTION_WINDOW=edge FLOMOTION_URL=https://feature.flomotion.app flomotion agen
 
 A named window gets its own browser profile, so it signs in separately from the default one.
 `flomotion status` reports which window it is addressing.
+
+On Windows `flomotion.exe` is a window app, so a shell does not wait for it. `flomotion.com` is a small console front that runs it, waits, and passes on its output and exit code; a bare `flomotion` finds the `.com` first. With no subcommand it opens the window and returns at once.
 
 Debugging the page on Windows: set `FLOMOTION_WEBVIEW_ARGS=--remote-debugging-port=9222` before launching, then attach any Chrome DevTools Protocol client to port 9222.
 

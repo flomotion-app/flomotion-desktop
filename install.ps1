@@ -11,6 +11,9 @@ Invoke-WebRequest -Uri $url -OutFile (Join-Path $tmp $archive)
 Expand-Archive -Path (Join-Path $tmp $archive) -DestinationPath $tmp -Force
 New-Item -ItemType Directory -Force $dir | Out-Null
 Copy-Item (Join-Path $tmp 'flomotion\flomotion.exe') (Join-Path $dir 'flomotion.exe') -Force
+if (Test-Path (Join-Path $tmp 'flomotion\flomotion.com')) {
+    Copy-Item (Join-Path $tmp 'flomotion\flomotion.com') (Join-Path $dir 'flomotion.com') -Force
+}
 Remove-Item -Recurse -Force $tmp
 
 Write-Host "installed $dir\flomotion.exe"

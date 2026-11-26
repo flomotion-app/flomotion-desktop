@@ -1,0 +1,13 @@
+[package]
+name = "flomotion-console"
+version = "0.4.8"
+description = "Console front for the FloMotion CLI on Windows"
+license = "MIT"
+edition = "2021"
+
+[dependencies]
+
+[profile.release]
+opt-level = "z"
+lto = true
+strip = true
