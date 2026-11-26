@@ -11,7 +11,7 @@ Pick the line for the user's platform and run it. Each downloads the latest rele
 - Linux or macOS: `curl -fsSL https://raw.githubusercontent.com/flomotion-app/flomotion-desktop/main/install.sh | sh`
 - Windows, in PowerShell: `irm https://raw.githubusercontent.com/flomotion-app/flomotion-desktop/main/install.ps1 | iex`
 
-If the script cannot be used, do it by hand: download the matching archive from https://github.com/flomotion-app/flomotion-desktop/releases/latest (`flomotion-linux-x86_64.tar.gz`, `flomotion-macos-arm64.tar.gz`, `flomotion-macos-x86_64.tar.gz` or `flomotion-windows-x86_64.zip`), extract it, and copy `flomotion/flomotion` (or `flomotion.exe`) to a directory on the path. Linux also needs WebKitGTK: `sudo apt-get install libwebkit2gtk-4.1-0` on Debian and Ubuntu. Building from source needs Rust and Node and is described in the repository README.
+If the script cannot be used, do it by hand: download the matching archive from https://github.com/flomotion-app/flomotion-desktop/releases/latest (`flomotion-linux-x86_64.tar.gz`, `flomotion-macos-arm64.tar.gz`, `flomotion-macos-x86_64.tar.gz` or `flomotion-windows-x86_64.zip`), extract it, and copy `flomotion/flomotion` (on Windows `flomotion.exe` and `flomotion.com`) to a directory on the path. Linux also needs WebKitGTK: `sudo apt-get install libwebkit2gtk-4.1-0` on Debian and Ubuntu. Building from source needs Rust and Node and is described in the repository README.
 
 The archives are not code signed. On macOS the binary is ad-hoc signed, which runs fine when fetched with curl or tar. If the user prefers, build from source instead.
 
@@ -19,7 +19,7 @@ Then run `flomotion status`. Open a new terminal first if the path was just chan
 
 ## Commands
 
-- `flomotion status` shows whether the desktop app is running, whether the page is connected, and which window it is addressing.
+- `flomotion status` shows whether the desktop app is running, whether the page is connected, which window it is addressing and, once the page is loaded, whether that window is signed in: `sign_in` is `signed_in` or `signed_out`, with the account's `email` and `display_name`.
 - `flomotion --window <name> ...`, or the `FLOMOTION_WINDOW` environment variable, drives a separate window with its own session. Use it when another agent may be using this machine; without it every agent shares one window.
 - `flomotion agent` prints the current state as JSON: `role`, `system_prompt`, `tools`, `live_context`, and the open project and item. Read `system_prompt` and follow it. Pass `--reset` to start over from no project.
 - `flomotion act <tool> '<json input>'` runs one tool and prints its result as JSON. Use `-f file.json` for large inputs. The output includes `changed`; when it is true, the response also carries a new `tools` list and possibly a new `system_prompt`, so re-read them.
@@ -36,9 +36,9 @@ Then run `flomotion status`. Open a new terminal first if the path was just chan
 - `flomotion diagnose` prints what the window is showing (route, open project and item, whether it is signed in), any commands still running and for how long, and its recent command log. Run it when a command times out, reports that the window did not open something, or seems stuck, and include its output when you report the problem. If `diagnose` itself gets no answer, the window is frozen. Don't retry a create after a timeout: check `list_items` first, the item usually exists.
 - `flomotion skill` prints this text.
 
-The app opens automatically when needed. If the output says the user must sign in, sign the window in with `flomotion login`:
+The app opens automatically when needed. Don't sign in up front: if `flomotion status` shows `sign_in: signed_in`, the window is ready, so go straight to your command. Only when `status` shows `signed_out`, or a command says the user must sign in, sign the window in with `flomotion login`:
 
-1. Run `flomotion login`. It prints a link. Give the link to the user and ask them to open it in a browser where they are signed in to FloMotion, approve, and send you the code it shows.
+1. Run `flomotion login`. If it answers `sign_in: already_signed_in`, the window is already signed in: continue with your command and don't ask the user for anything. Otherwise it prints a link. Give the link to the user and ask them to open it in a browser where they are signed in to FloMotion, approve, and send you the code it shows.
 2. Run `flomotion login --code <code>`. The window is now signed in as the user; the output says who.
 
 The code works once, for 10 minutes, and only for the window that printed the link. If it fails, start again from step 1. You never see or store the user's password or token.

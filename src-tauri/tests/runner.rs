@@ -40,6 +40,19 @@ fn status_reports_not_running_when_socket_is_closed() {
 }
 
 #[test]
+fn status_adds_the_page_account_and_survives_a_page_without_it() {
+    let (runner, _, _) = runner(vec![ready(), Ok(Response::success(json!({"sign_in": "signed_in", "email": "a@b.c"}))), ready(), Ok(Response::failure("unknown command"))]);
+    let mut out = Vec::new();
+    runner.run(Command::Status, &mut out).unwrap();
+    let status = output(out);
+    assert_eq!(status["sign_in"], json!("signed_in"));
+    assert_eq!(status["page_ready"], Value::Bool(true));
+    let mut out = Vec::new();
+    runner.run(Command::Status, &mut out).unwrap();
+    assert_eq!(output(out)["sign_in"], Value::Null);
+}
+
+#[test]
 fn act_launches_the_app_when_it_is_not_running() {
     let (runner, log, launches) = runner(vec![
         Err(DesktopError::AppNotRunning),

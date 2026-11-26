@@ -63,10 +63,25 @@ impl CliRunner {
     }
 
     fn status(&self) -> Result<Value> {
-        match self.transport.send(Request::status()) {
-            Ok(response) => Ok(self.unwrap(response)?),
-            Err(DesktopError::AppNotRunning) => Ok(json!({ "running": false })),
-            Err(error) => Err(error),
+        let response = match self.transport.send(Request::status()) {
+            Ok(response) => response,
+            Err(DesktopError::AppNotRunning) => return Ok(json!({ "running": false })),
+            Err(error) => return Err(error),
+        };
+        let ready = self.page_ready(&response);
+        let mut status = self.unwrap(response)?;
+        if ready {
+            self.merge_account(&mut status);
+        }
+        Ok(status)
+    }
+
+    fn merge_account(&self, status: &mut Value) {
+        let Ok(Response { ok: true, result: Value::Object(account), .. }) = self.transport.send(Request::new("account", json!({}))) else {
+            return;
+        };
+        for (key, value) in account {
+            status[key.as_str()] = value;
         }
     }
 
